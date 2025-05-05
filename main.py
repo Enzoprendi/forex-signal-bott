@@ -3,8 +3,7 @@ import requests
 
 app = Flask(__name__)
 
-# Direct values for testing (use env vars in production)
-BOT_TOKEN = "7373123273:AAEWtPpbyjo8Tsy7Ym0DO-xVsbh783JXiQ8"
+BOT_TOKEN = "7990066362:AAGlUyA8MHaOnZs96BwF_I_oIYgPzgH2a1A"
 CHAT_ID = "-1002464221484"
 
 def send_telegram_message(text):
@@ -26,16 +25,25 @@ def webhook():
     print("Webhook received:", data)
 
     pair = data.get("pair", "Unknown")
-    side = data.get("side", "BUY")
-    entry = data.get("entry", "N/A")
-    tp = data.get("tp", "N/A")
-    sl = data.get("sl", "N/A")
+    side = data.get("side", "BUY").upper()
+    entry = float(data.get("entry", 0))
+
+    # Auto-calculate 15 pip TP/SL
+    pip_size = 0.01 if "JPY" not in pair else 0.1
+    pip_value = pip_size * 15
+
+    if side == "BUY":
+        tp = entry + pip_value
+        sl = entry - pip_value
+    else:
+        tp = entry - pip_value
+        sl = entry + pip_value
 
     message = f"""
-💹 *{pair}* – *{side.upper()}* Signal  
-📍 *Entry*: {entry}  
-🎯 *TP*: {tp}  
-🛡 *SL*: {sl}  
+💹 *{pair}* – *{side}* Signal  
+📍 *Entry*: {entry:.5f}  
+🎯 *TP*: {tp:.5f}  
+🛡 *SL*: {sl:.5f}  
 #forex #signals #LFX
 """
     send_telegram_message(message.strip())
@@ -47,3 +55,4 @@ def home():
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=3000)
+
